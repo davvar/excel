@@ -1,5 +1,5 @@
 {
-  "name": "excel-course",
+  "name": "excel",
   "version": "1.0.0",
   "description": "Pure JavaScript Excel Application",
   "main": "webpack.config.js",
@@ -10,7 +10,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com//davvar/excel.git"
+    "url": "git+https://github.com/davvar/excel.git"
   },
   "keywords": [
     "js",
