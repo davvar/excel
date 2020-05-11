@@ -13,6 +13,10 @@ class Dom {
         return this.$el.innerHTML
     }
 
+    get data() {
+        return this.$el.dataset
+    }
+
     clear() {
         this.html('')
         return this
@@ -31,6 +35,28 @@ class Dom {
         this.$el.append(node)
 
         return this
+    }
+
+    closest(selector) {
+        /* 
+         * wrapping with function because closest returns 
+        *  html element but we need instance od dom to 
+        *  continue chaining
+        */
+        return $(this.$el.closest(selector))
+    }
+
+    getCoordinates() {
+        return this.$el.getBoundingClientRect()
+    }
+
+    findAll(selector) {
+        return this.$el.querySelectorAll(selector)
+    }
+
+    css(styles = {}) {
+        Object.entries(styles)
+            .forEach(([prop, value]) => this.$el.style[prop] = value)
     }
 }
 
