@@ -58,6 +58,7 @@
     white-space: nowrap;
     outline: none;
 
+
     &.selected {
       border: none;
       outline: 2px solid $primary-color;
@@ -65,8 +66,7 @@
     }
   }
 
-  .col-resize,
-  .row-resize {
+  .col-resize, .row-resize {
     position: absolute;
     bottom: 0;
     right: 0;
@@ -75,7 +75,7 @@
     z-index: 1000;
 
     &:hover {
-      opacity: 1 !important;
+      opacity: 1!important;
     }
   }
 
@@ -96,12 +96,5 @@
       cursor: row-resize;
     }
   }
-}
 
-.disable-select {
-  user-select: none;
-  -webkit-user-select: none;
-  -khtml-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
 }

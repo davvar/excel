@@ -1,49 +1,72 @@
-const CODES = { A: 65, Z: 90 }
+import {toInlineStyles} from '@core/utils'
+import {defaultStyles} from '@/constants'
+import {parse} from '@core/parse'
+
+const CODES = {
+  A: 65,
+  Z: 90
+}
+
 const DEFAULT_WIDTH = 120
 const DEFAULT_HEIGHT = 24
 
-const toChar = (_, index) => String.fromCharCode(CODES.A + index)
-const getWidth = ({ colsState }, index) => `${colsState[index] || DEFAULT_WIDTH}px`
-const withWidthFrom = (state) => (col, index) => ({ col, index, width: getWidth(state, index) })
-const toColumn = ({ col, index, width }) =>
-  `<div 
-    class="column disable-select" 
-    style="width:${width};" 
-    data-type="resizable"
-    data-col=${index}
-    >
-    ${col}
-    <div class="col-resize" data-resize="col"></div>
-   </div>`
-
-
-const toCell = (row, state) => (_, col) => {
-  const id = `${row}:${col}`
-  return ` <div 
-       class="cell"
-       style="width: ${getWidth(state, col)}"
-       contenteditable
-       data-type="cell"
-       data-id="${id}"
-       data-col=${col}
-       >${state.dataState[id] || ''}
-     </div>`
+function getWidth(state, index) {
+  return (state[index] || DEFAULT_WIDTH) + 'px'
 }
 
-const getHeight = ({ rowsState }, index) => `${rowsState[index] || DEFAULT_HEIGHT}px`
+function getHeight(state, index) {
+  return (state[index] || DEFAULT_HEIGHT) + 'px'
+}
 
-function createRow(index, content, height) {
-       
-  const resize = index ? '<div class="row-resize" data-resize="row"></div>' : ''
+function toCell(state, row) {
+  return function(_, col) {
+    const id = `${row}:${col}`
+    const width = getWidth(state.colState, col)
+    const data = state.dataState[id]
+    const styles = toInlineStyles({
+      ...defaultStyles,
+      ...state.stylesState[id]
+    })
+    return `
+      <div 
+        class="cell" 
+        contenteditable 
+        data-col="${col}"
+        data-type="cell"
+        data-id="${id}"
+        data-value="${data || ''}"
+        style="${styles}; width: ${width}"
+      >${parse(data) || ''}</div>
+    `
+  }
+}
+
+function toColumn({col, index, width}) {
   return `
-    <div
-      class="row disable-select"
-      style="height:${height}"
-      data-row=${index}
-      data-type="resizable"
-      >
+    <div 
+      class="column" 
+      data-type="resizable" 
+      data-col="${index}" 
+      style="width: ${width}"
+    >
+      ${col}
+      <div class="col-resize" data-resize="col"></div>
+    </div>
+  `
+}
+
+function createRow(index, content, state = {}) {
+  const resize = index ? '<div class="row-resize" data-resize="row"></div>' : ''
+  const height = getHeight(state, index)
+  return `
+    <div 
+      class="row" 
+      data-type="resizable" 
+      data-row="${index}"
+      style="height: ${height}"
+    >
       <div class="row-info">
-        ${index || ''}
+        ${index ? index : ''}
         ${resize}
       </div>
       <div class="row-data">${content}</div>
@@ -51,21 +74,38 @@ function createRow(index, content, height) {
   `
 }
 
-export function createTable(rowsCount = 15, state) {
-  const colsCount = CODES.Z - CODES.A + 1
-  const cols = [...Array(colsCount)]
-    .map(toChar)
-    .map(withWidthFrom(state))
-    .map(toColumn)
-    .join('')
+function toChar(_, index) {
+  return String.fromCharCode(CODES.A + index)
+}
 
-  const rows = [createRow(null, cols, `${DEFAULT_HEIGHT}px`)]
+function withWidthFrom(state) {
+  return function(col, index) {
+    return {
+      col, index, width: getWidth(state.colState, index)
+    }
+  }
+}
+
+export function createTable(rowsCount = 15, state = {}) {
+  const colsCount = CODES.Z - CODES.A + 1 // Compute cols count
+  const rows = []
+
+  const cols = new Array(colsCount)
+      .fill('')
+      .map(toChar)
+      .map(withWidthFrom(state))
+      .map(toColumn)
+      .join('')
+
+  rows.push(createRow(null, cols))
 
   for (let row = 0; row < rowsCount; row++) {
-    const cells = [...Array(colsCount)].map(toCell(row, state)).join('')
-    const height = getHeight(state, row + 1)
+    const cells = new Array(colsCount)
+        .fill('')
+        .map(toCell(state, row))
+        .join('')
 
-    rows.push(createRow(row + 1, cells, height))
+    rows.push(createRow(row + 1, cells, state.rowState))
   }
 
   return rows.join('')
