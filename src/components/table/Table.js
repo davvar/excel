@@ -5,6 +5,7 @@ import { shouldResize, isCell } from '@/components/table/table.functions'
 import { TableSelection } from './Table.selection'
 import { $ } from '@core/dom'
 import { matrix, nextSelector } from '@core/utils'
+import * as actions from '../../redux/actions'
 
 export class Table extends ExcelComponent {
   static className = 'excel__table'
@@ -19,7 +20,7 @@ export class Table extends ExcelComponent {
   }
 
   toHTML() {
-    return createTable(34)
+    return createTable(34, this.store.getState())
   }
 
   prepare() {
@@ -33,6 +34,7 @@ export class Table extends ExcelComponent {
 
     this.$on('formula:input', text => {
       this.selection.current.text(text)
+      this.changeTextInStore(text)
     })
 
     this.$on('formula:done', () => this.selection.current.focus())
@@ -41,18 +43,25 @@ export class Table extends ExcelComponent {
   selectCell($cell) {
     this.selection.select($cell)
     this.$emit('table:select', $cell)
+    this.$dispatch({ type: 'table:select' })
+  }
+
+  async tableResize(event) {
+    const data = await resizeHandler(this.$root, event)
+    this.$dispatch(actions.tableResize(data))
   }
 
   onMousedown(event) {
     if (shouldResize(event)) {
-      resizeHandler(this.$root, event)
+      this.tableResize(event)
     } else if (isCell(event)) {
       const $cell = $(event.target)
       if (event.shiftKey) {
-        const $cells = matrix($cell, this.selection.current).map(id => this.$root.find(`[data-id="${id}"]`))
+        const $cells = matrix($cell, this.selection.current)
+          .map(id => this.$root.find(`[data-id="${id}"]`))
         this.selection.selectGroup($cells)
       } else {
-        this.selection.select($cell)
+        this.selectCell($cell)
       }
     }
   }
@@ -68,7 +77,14 @@ export class Table extends ExcelComponent {
     }
   }
 
+  changeTextInStore(value) {
+    this.$dispatch(actions.changeText({
+      id: this.selection.current.id(),
+      value
+    }))
+  }
+
   onInput(event) {
-    this.$emit('table:input', $(event.target))
+    this.changeTextInStore($(event.target).text())
   }
 }

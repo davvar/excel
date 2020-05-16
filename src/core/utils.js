@@ -46,3 +46,20 @@ export function nextSelector(key, col, row) {
 
     return `[data-id="${row}:${col}"]`
 }
+
+
+export function storage(key, data = null) {
+    if (!data) {
+        return JSON.parse(localStorage.getItem(key))
+    } else {
+        localStorage.setItem(key, JSON.stringify(data))
+    }
+}
+
+export function isEqual(a, b) {
+    if (typeof a === "object" && typeof b === "object") {
+        return JSON.stringify(a) === JSON.stringify(b)
+    } else {
+        return a === b
+    }
+}
